@@ -3,22 +3,11 @@ sudo tee /usr/local/bin/update-protected >/dev/null <<'SCRIPT'
 set -Eeuo pipefail
 umask 077
 
-# Resolve the actual user's home directory,
-# even when the updater is executed with sudo.
-if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
-    USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
-else
-    USER_HOME="$HOME"
-fi
+RUN_USER="${SUDO_USER:-$USER}"
+USER_HOME="$(getent passwd "$RUN_USER" | cut -d: -f6)"
 
 PROJECT_DIR="$USER_HOME/Securico-VideoEdgeBox"
 BASE_URL="https://raw.githubusercontent.com/Ashu300591/Securico-VideoEdgeBox-update/main"
-
-FILES=(
-    "app.py"
-    "listener.py"
-    "templates/network.html"
-)
 
 WORK_DIR=""
 
@@ -30,7 +19,7 @@ fail() {
 
 cleanup() {
     if [[ -n "$WORK_DIR" && -d "$WORK_DIR" ]]; then
-        rm -rf "$WORK_DIR"
+        rm -rf -- "$WORK_DIR"
     fi
 }
 trap cleanup EXIT
@@ -39,31 +28,20 @@ echo "======================================"
 echo " Securico VideoEdgeBox File Updater"
 echo "======================================"
 
-[[ -d "$PROJECT_DIR" ]] ||
-    fail "Project folder not found: $PROJECT_DIR"
-
-command -v curl >/dev/null 2>&1 ||
-    fail "curl is not installed."
+[[ -d "$PROJECT_DIR" ]] || fail "Project folder not found: $PROJECT_DIR"
+command -v curl >/dev/null 2>&1 || fail "curl is not installed."
 
 WORK_DIR="$(mktemp -d "$PROJECT_DIR/.update-tmp.XXXXXX")"
+mkdir -p "$WORK_DIR/download" "$WORK_DIR/backup"
 
-mkdir -p "$WORK_DIR/backup" "$WORK_DIR/download"
+FILES=("app.py" "listener.py" "network.html")
 
 echo
 echo "[1/3] Downloading files from GitHub..."
 
-# Download all files before modifying existing ones.
 for file in "${FILES[@]}"; do
-
-    echo "Downloading: $file"
-
-    mkdir -p "$(dirname "$WORK_DIR/download/$file")"
-
-    if ! curl -fsSL --connect-timeout 15 \
-        --max-time 120 \
-        "$BASE_URL/$file" \
-        -o "$WORK_DIR/download/$file"; then
-
+    if ! curl -fsSL --retry 3 --connect-timeout 15 \
+        "$BASE_URL/$file" -o "$WORK_DIR/download/$file"; then
         fail "Could not download $file. Existing files are unchanged."
     fi
 
@@ -75,15 +53,16 @@ echo
 echo "[2/3] Backing up existing files..."
 
 for file in "${FILES[@]}"; do
-
-    if [[ -f "$PROJECT_DIR/$file" ]]; then
-
-        mkdir -p "$(dirname "$WORK_DIR/backup/$file")"
-
-        cp -a "$PROJECT_DIR/$file" \
-              "$WORK_DIR/backup/$file"
+    if [[ "$file" == "network.html" ]]; then
+        destination="$PROJECT_DIR/templates/network.html"
+    else
+        destination="$PROJECT_DIR/$file"
     fi
 
+    if [[ -f "$destination" ]]; then
+        mkdir -p "$WORK_DIR/backup/$(dirname "$file")"
+        cp -a "$destination" "$WORK_DIR/backup/$file"
+    fi
 done
 
 echo
@@ -93,34 +72,39 @@ rollback() {
     echo "Installation failed. Restoring previous files..."
 
     for file in "${FILES[@]}"; do
-        if [[ -f "$WORK_DIR/backup/$file" ]]; then
-            cp -a "$WORK_DIR/backup/$file" \
-                  "$PROJECT_DIR/$file" || true
+        if [[ "$file" == "network.html" ]]; then
+            destination="$PROJECT_DIR/templates/network.html"
         else
-            rm -f "$PROJECT_DIR/$file" || true
+            destination="$PROJECT_DIR/$file"
+        fi
+
+        if [[ -f "$WORK_DIR/backup/$file" ]]; then
+            cp -a "$WORK_DIR/backup/$file" "$destination" || true
+        else
+            rm -f "$destination"
         fi
     done
 }
 
+mkdir -p "$PROJECT_DIR/templates"
+
 for file in "${FILES[@]}"; do
+    if [[ "$file" == "network.html" ]]; then
+        destination="$PROJECT_DIR/templates/network.html"
+    else
+        destination="$PROJECT_DIR/$file"
+    fi
 
-    echo "Installing: $file"
-
-    mkdir -p "$(dirname "$PROJECT_DIR/$file")"
-
-    if ! install -m 755 \
-        "$WORK_DIR/download/$file" \
-        "$PROJECT_DIR/$file"; then
-
+    if ! install -m 644 "$WORK_DIR/download/$file" "$destination"; then
         rollback
         fail "Installation failed; rollback attempted."
     fi
-
 done
 
-# Restore ownership when run with sudo.
-if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
-    chown -R "$SUDO_USER:$(id -gn "$SUDO_USER")" \
+chmod 755 "$PROJECT_DIR/app.py" "$PROJECT_DIR/listener.py"
+
+if [[ -n "${SUDO_USER:-}" ]]; then
+    chown "$RUN_USER:$(id -gn "$RUN_USER")" \
         "$PROJECT_DIR/app.py" \
         "$PROJECT_DIR/listener.py" \
         "$PROJECT_DIR/templates/network.html"
@@ -130,12 +114,9 @@ echo
 echo "======================================"
 echo " UPDATE COMPLETED SUCCESSFULLY"
 echo "======================================"
-echo "Updated files:"
-echo " - app.py"
-echo " - listener.py"
-echo " - templates/network.html"
-echo
-echo "Destination: $PROJECT_DIR"
+echo "Updated: app.py"
+echo "Updated: listener.py"
+echo "Updated: templates/network.html"
 echo "PyArmor: NOT USED"
 echo "Encryption: NOT PERFORMED"
 echo "======================================"
