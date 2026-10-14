@@ -1,162 +1,328 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
 <meta charset="utf-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>SECURICO Video Edge Box</title>
+
+
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
+
+
 <style>
+
 body{
+
     background:#eef3f8;
+
     font-family:Segoe UI,Arial,sans-serif;
+
 }
+
+
 
 .navbar{
+
     box-shadow:0 2px 10px rgba(0,0,0,.15);
+
 }
+
+
 
 .dashboard-card{
+
     border:none;
+
     border-radius:15px;
+
     box-shadow:0 5px 15px rgba(0,0,0,.12);
+
     transition:.3s;
+
     height:100%;
+
 }
+
+
 
 .dashboard-card:hover{
+
     transform:translateY(-4px);
+
     box-shadow:0 10px 25px rgba(0,0,0,.20);
+
 }
+
+
 
 .stat-title{
+
     color:#6c757d;
+
     font-size:14px;
+
     font-weight:600;
+
     margin-bottom:12px;
+
 }
+
+
 
 .stat-value{
+
     font-size:24px;
+
     font-weight:bold;
+
     min-height:42px;
+
     display:flex;
+
     align-items:center;
+
     justify-content:center;
+
 }
+
+
 
 .section-card{
+
     border:none;
+
     border-radius:15px;
+
     box-shadow:0 5px 15px rgba(0,0,0,.12);
+
 }
+
+
 
 .card-header{
+
     background:#0d6efd;
+
     color:white;
+
     font-weight:bold;
+
     border-radius:15px 15px 0 0!important;
+
 }
+
+
 
 .table thead{
+
     background:#0d6efd;
+
     color:white;
+
 }
+
+
 
 .btn{
+
     border-radius:8px;
+
 }
+
+
 
 .form-control,
+
 .form-select{
+
     border-radius:8px;
+
 }
 
+
+
 .badge{
+
     font-size:13px;
+
 }
+
 </style>
+
 </head>
+
+
 
 <body>
 
+
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+
 <div class="container">
+
 <!-- <a class="navbar-brand fw-bold" href="#">SECURICO Video Edge Box</a> -->
 
+
+
 <a class="navbar-brand d-flex align-items-center" href="#">
+
     <img src="/static/images/Securico Logo.png"
+
          alt="Logo"
+
          height="40"
+
          class="me-2">
+
     <span class="fw-bold">Video Edge Box</span>
+
 </a>
 
+
+
 <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+
 <div class="collapse navbar-collapse" id="nav">
+
 <ul class="navbar-nav ms-auto">
+
 <li class="nav-item">
+
     <!-- <a class="nav-link active" href="index.html">Home</a> -->
-</li>
-<li class="nav-item dropdown">
-<a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Menu</a>
-<ul class="dropdown-menu">
-    <li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
-    <li><a class="dropdown-item" href="/configuration">Device Configuration</a></li>
-    <li><a class="dropdown-item" href="/networkconfiguraton">Local Network Configuration</a></li>
-    <li><a class="dropdown-item" href="#" onclick="openVideoEdge()">TCP Listener Dashboard</a></li>
-    <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
-</ul>
+
 </li>
 
+<li class="nav-item dropdown">
+
+<a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Menu</a>
+
+<ul class="dropdown-menu">
+
+    <li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
+
+    <li><a class="dropdown-item" href="/configuration">Device Configuration</a></li>
+
+    <li><a class="dropdown-item" href="/networkconfiguraton">Local Network Configuration</a></li>
+
+    <li><a class="dropdown-item" href="#" onclick="openVideoEdge()">TCP Listener Dashboard</a></li>
+
+    <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+
+</ul>
+
+</li>
+
+
+
 </div>
+
+
+
 
 
 </nav>
 
+
+
 <div class="container py-4">
+
+
 
     <div class="row g-3 mb-4">
 
+
+
     <div class="col-lg-3 col-md-6">
+
         <div class="card dashboard-card p-3 text-center">
+
             <div class="stat-title">Panel ID</div>
+
             <div id="panelid" class="stat-value text-success"></div>
+
         </div>
+
     </div>
+
+
 
     <div class="col-lg-3 col-md-6">
+
         <div class="card dashboard-card p-3 text-center">
+
             <div class="stat-title">Device IP Address</div>
+
             <div id="currentIp" inputmode="decimal" maxlength="15" class="stat-value text-primary" oninput="validateIP(this)">00:00:00</div>
+
         </div>
+
     </div>
 
+
+
     <div class="col-md-3">
+
         <div class="card dashboard-card p-3 text-center">
+
             <div class="stat-title">MAC ID</div><div id="mac" class="stat-value">--</div>
+
         </div>
+
     </div>
+
     <div class="col-md-3">
+
         <div class="card dashboard-card p-3 text-center">
+
             <div class="stat-title">Storage</div><div id="storageused" class="stat-value">--</div>
+
         </div>
+
     </div>
+
 </div>  
-<!-- <div class="col-lg-3 col-md-6">
-<div class="card dashboard-card p-3 text-center">
-<div class="stat-title">MAC ID</div> 
-<div class="col-md-3"><div class="card dashboard-card p-3 text-center"><div class="stat-title">MAC ID</div><div id="mac" class="stat-value">--</div></div></div>
-</div>
-</div> -->
 
 <!-- <div class="col-lg-3 col-md-6">
+
 <div class="card dashboard-card p-3 text-center">
-<div class="stat-title">Videos Today</div>
-<div id="videosToday" class="stat-value text-danger">0</div>
+
+<div class="stat-title">MAC ID</div> 
+
+<div class="col-md-3"><div class="card dashboard-card p-3 text-center"><div class="stat-title">MAC ID</div><div id="mac" class="stat-value">--</div></div></div>
+
 </div>
+
 </div> -->
+
+
+
+<!-- <div class="col-lg-3 col-md-6">
+
+<div class="card dashboard-card p-3 text-center">
+
+<div class="stat-title">Videos Today</div>
+
+<div id="videosToday" class="stat-value text-danger">0</div>
+
+</div>
+
+</div> -->
+
+
+
+
+
+
+
+
 
 
 
@@ -165,577 +331,1149 @@ body{
 
 
 <!-- <div class="card section-card mb-4">
+
 <div class="card-header">Search Videos</div>
+
 <div class="card-body">
+
+
 
 <div class="row g-3">
 
+
+
 <div class="col-md-3">
+
 <label class="form-label">Camera</label>
+
 <select id="camera" class="form-select">
+
 <option value="">Select Camera</option>
+
 <option value="101">Camera 1</option>
+
 <option value="201">Camera 2</option>
+
 <option value="301">Camera 3</option>
+
 <option value="401">Camera 4</option>
+
 </select>
+
 </div>
 
+
+
 <div class="col-md-3">
+
 <label class="form-label">Date</label>
+
 <input id="date" type="date" class="form-control">
+
 </div>
 
+
+
 <div class="col-md-3">
+
 <label class="form-label">From</label>
+
 <input id="from" type="time" step="1" class="form-control">
+
 </div>
 
+
+
 <div class="col-md-3">
+
 <label class="form-label">To</label>
+
 <input id="to" type="time" step="1" class="form-control">
+
 </div>
+
+
 
 <div class="col-12 text-end">
-<button class="btn btn-primary px-4" onclick="searchVideos()">🔍 Search</button>
-</div>
+
+<button class="btn btn-primary px-4" onclick="searchVideos()">ðŸ” Search</button>
 
 </div>
 
+
+
 </div>
+
+
+
+</div>
+
 </div> -->
 
 
 
 
+
+
+
+
+
 <div class="card section-card mb-4">
 
+
+
 <div class="card-header">
+
     Device Network Configuration
+
 </div>
+
+
 
 <div class="card-body">
 
+
+
     <div class="row g-3">
+
         <!-- <div class="col-md-6">
+
             <label class="form-label">Device Name</label>
+
             <input type="text" class="form-control" id="hostname" value="VEB-001">
+
         </div> -->
+
+
 
         <!-- DHCP -->
+
         <!-- <div class="col-md-6">
+
             <label class="form-label">DHCP</label>
+
             <select class="form-select" id="dhcp" onchange="toggleStaticIP()">
+
                 <option value="yes">Enable DHCP</option>
+
                 <option value="no">Static IP</option>
+
             </select>
+
         </div> -->
+
+
 
         <!-- IP Address -->
+
         <div class="col-md-4 static-ip">
+
             <label class="form-label">IP Address</label>
+
             <input type="text" class="form-control" id="ip" placeholder="192.168.1.100">
+
         </div>
+
         <!-- Subnet -->
+
         <div class="col-md-4 static-ip">
+
             <label class="form-label">Subnet Mask</label>
+
             <input type="text" class="form-control" id="subnet" placeholder="255.255.255.0">
+
         </div>
+
+
 
         <!-- Gateway -->
+
         <div class="col-md-4 static-ip">
+
             <label class="form-label">Default Gateway</label>
+
             <input type="text" class="form-control" id="gateway" placeholder="192.168.1.1">
+
         </div>
+
+
 
         <!-- DNS -->
-        <div class="col-md-6">
-            <label class="form-label">Primary DNS</label>
-            <input type="text" class="form-control" id="dns1" value="8.8.8.8">
-        </div>
 
         <div class="col-md-6">
-            <label class="form-label">Secondary DNS</label>
-            <input type="text" class="form-control" id="dns2" value="8.8.4.4">
+
+            <label class="form-label">Primary DNS</label>
+
+            <input type="text" class="form-control" id="dns1" value="8.8.8.8">
+
         </div>
+
+
+
+        <div class="col-md-6">
+
+            <label class="form-label">Secondary DNS</label>
+
+            <input type="text" class="form-control" id="dns2" value="8.8.4.4">
+
+        </div>
+
+
 
         <!-- MAC -->
+
         <div class="col-md-6">
+
             <label class="form-label">MAC Address</label>
+
             <input type="text" class="form-control" id="macid" value="00:11:22:33:44:55" readonly>
+
         </div>
 
+
+
         <!-- Time Zone -->
+
         <!-- <div class="col-md-6">
+
             <label class="form-label">Time Zone</label>
+
             <select class="form-select">
+
                 <option>Asia/Kolkata</option>
+
                 <option>UTC</option>
+
                 <option>America/New_York</option>
+
             </select>
+
         </div> -->
+
     </div>
+
+
 
     <div class="text-end mt-4">
 
+
+
         <!-- <button class="btn btn-secondary">
+
             Get Configuration
+
         </button> -->
 
+
+
         <button class="btn btn-danger" onclick="shutdownPi()">
+
             Shutdown Device
+
         </button>
+
+
 
         <button class="btn btn-warning" onclick="rebootPi()">
+
             Restart Device
+
         </button>
 
+
+
         <button class="btn btn-primary" onclick="saveNetworkConfig()">
+
             Save Configuration
+
         </button>
+
+
 
     </div>
 
+
+
     <div class="d-flex flex-wrap gap-4 mb-4">
 
-</div>
+
 
 </div>
 
+
+
 </div>
+
+
+
+</div>
+
+
+
+
+
 
 
 
 
 <div class="card section-card mb-4">
 
+
+
     <div class="card-header">
+
         Device Listener Configuration
+
     </div>
+
     
+
     <div class="card-body">
+
     
+
         <div class="row g-3">
+
             
+
               
+
             <!-- IP Address -->
+
             <div class="col-md-4 static-ip">
+
                 <label class="form-label">Listener Port</label>
+
                 <input type="text" class="form-control" id="listenerPort" placeholder="5000">
+
             </div>
+
+
 
             <!-- Subnet -->
+
             <div class="col-md-4 static-ip">
+
                 <label class="form-label">Web Dashboard Access Port</label>
+
                 <input type="text" class="form-control" id="webaccessport" placeholder="5001">
+
             </div>
+
     
+
             <!-- Gateway -->
+
             <!-- <div class="col-md-4 static-ip">
+
                 <label class="form-label">Default Gateway</label>
+
                 <input type="text" class="form-control" id="gateway" placeholder="192.168.1.1">
+
             </div> -->
+
     
+
             <!-- DNS -->
+
             <!-- <div class="col-md-6">
+
                 <label class="form-label">Primary DNS</label>
+
                 <input type="text" class="form-control" id="dns1" value="8.8.8.8">
+
             </div> -->
+
     
+
             <!-- <div class="col-md-6">
+
                 <label class="form-label">Secondary DNS</label>
+
                 <input type="text" class="form-control" id="dns2" value="8.8.4.4">
+
             </div> -->
+
     
+
             <!-- MAC -->
+
             <!-- <div class="col-md-6">
+
                 <label class="form-label">MAC Address</label>
+
                 <input type="text" class="form-control" id="macid" value="00:11:22:33:44:55" readonly>
+
             </div> -->
+
     
+
             <!-- Time Zone -->
+
             <!-- <div class="col-md-6">
+
                 <label class="form-label">Time Zone</label>
+
                 <select class="form-select">
+
                     <option>Asia/Kolkata</option>
+
                     <option>UTC</option>
+
                     <option>America/New_York</option>
+
                 </select>
+
             </div> -->
+
         </div>
+
     
+
         
+
               
+
     
+
         <div class="text-end mt-4">
+
     
+
             <!-- <button class="btn btn-secondary">
+
                 Get Configuration
+
             </button> -->
+
     
+
             <!-- <button class="btn btn-warning" onclick="rebootPi()">
+
                 Restart Device
+
             </button> -->
+
     
+
             <button class="btn btn-primary" onclick="savedeviceNetworkConfig()">
+
                 Save Configuration
+
             </button>
+
     
+
         </div>
+
     
+
         <div class="d-flex flex-wrap gap-4 mb-4">
+
     
-    </div>
-    
-    </div>
-    
+
     </div>
 
     
+
+    </div>
+
+    
+
+    </div>
+
+
+
+    
+
+
 
 </div>
+
 <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> -->
 
+
+
 <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+
 <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+
 <script>
 
+
+
 async function loadstoageconsumed()
+
     {
+
         const response = await fetch('/api/getstorage');
+
         const data = await response.json();
+
+
 
         document.getElementById("storageused").innerText = data.used+"GB of "+data.total_space+"GB";
+
     }
+
     
+
     loadstoageconsumed();
 
+
+
     async function loadNetworkInfo()
+
     {
+
         const response = await fetch('/api/network');
+
         const data = await response.json();
+
+
 
         var defaultgateway=data.gateway
 
+
+
         document.getElementById("currentIp").innerText = data.ip;
+
         // document.getElementById("mac").innerText = data.mac;
+
         document.getElementById("ip").value = data.ip;
+
         // document.getElementById("macid").value = data.mac;
+
         document.getElementById("subnet").value = data.subnet;
+
         document.getElementById("gateway").value = data.gateway;
+
         
+
     }
+
     
+
     loadNetworkInfo();
+
  
+
     async function getmacid() {
+
         try {
+
             const response = await fetch('/api/getmacid');
 
+
+
             if (!response.ok) {
+
                 throw new Error("API request failed");
+
             }
+
+
 
             const data = await response.json();
 
+
+
             console.log("MAC received:", data.mac);
 
+
+
             const macText = document.getElementById("mac");
+
             const macInput = document.getElementById("macid");
 
+
+
             if (macText) {
+
                 macText.innerText = data.mac;
+
             }
+
+
 
             if (macInput) {
+
                 macInput.value = data.mac;
+
             }
 
+
+
         } catch (error) {
+
             console.error("MAC address error:", error);
+
         }
+
     }
+
+
 
     document.addEventListener("DOMContentLoaded", function () {
+
         getmacid();
+
     });
 
+
+
     async function getpanelid()
+
     {
+
         const response = await fetch('/api/getpanelid');
+
         const data = await response.json();
 
+
+
         var pid=data[0]
+
         pid=pid['panelid']
 
+
+
         document.getElementById("panelid").innerText = pid;
+
         
+
     }
+
     
+
     getpanelid();
 
+
+
     function rebootPi() {
+
         if (confirm("Reboot Video Edge Box?")){
+
             fetch('/reboot', {
+
                 method: 'POST'
+
             })
+
             .then(response => response.json())
+
             .then(data => {
+
                 alert(data.message);
+
             })
+
             .catch(error => {
+
                 alert("Failed to reboot device");
+
                 console.error(error);
+
             });
+
         }   
+
     }
 
+
+
     function shutdownPi(){
+
         if (confirm("Shutdown Video Edge Box?")){
+
             fetch('/shutdown', {
+
                 method: 'POST'
+
             })
+
             .then(response => response.json())
+
             .then(data => {
+
                 alert(data.message);
+
             })
+
             .catch(error => {
+
                 alert("Failed to reboot device");
+
                 console.error(error);
+
             });
+
         }        
+
     }
+
+
 
     async function saveNetworkConfig() {
 
+
+
         const ip = document.getElementById("ip").value.trim();
 
+
+
         // Check for alphabets or special characters
+
         if (!/^[0-9.]+$/.test(ip)) {
+
             alert("IP Address can contain only numbers and dots.");
+
             document.getElementById("ip").focus();
+
             return;
+
         }
 
+
+
         // Check valid IPv4 format
+
         const parts = ip.split(".");
+
         
+
         if (parts.length !== 4) {
+
             alert("Please enter a valid IP Address.\nExample: 192.168.1.100");
+
             document.getElementById("ip").focus();
+
             return;
+
         }
+
+
 
     for (let part of parts) {
 
+
+
         // Each part must contain numbers
+
         if (!/^\d+$/.test(part)) {
+
             alert("Invalid IP Address.");
+
             document.getElementById("ip").focus();
+
             return;
+
         }
+
+
 
         // Each section must be 0-255
+
         const number = Number(part);
 
+
+
         if (number < 0 || number > 255) {
+
             alert("Each IP section must be between 0 and 255.");
+
             document.getElementById("ip").focus();
+
             return;
+
         }
+
     }
+
+
+
 
 
         const payload = {
+
             // hostname: document.getElementById("hostname").value,
+
             // dhcp: document.getElementById("dhcp").value,
+
             ip: document.getElementById("ip").value,
+
             subnet: document.getElementById("subnet").value,
+
             gateway: document.getElementById("gateway").value,
+
             dns1: document.getElementById("dns1").value,
+
             dns2: document.getElementById("dns2").value
+
         };
 
+
+
         try {
+
             const response = await fetch('/api/setnetwork', {
+
                 method: 'POST',
+
                 headers: {
+
                     'Content-Type': 'application/json'
+
                 },
+
                 body: JSON.stringify(payload)
+
             });
+
         
+
             const result = await response.json();
+
         
+
             if(result.status === "success"){
+
                 // alert("Network configuration saved successfully");
+
                 const answer = confirm("Network configuration saved successfully. Press OK to continue");
 
+
+
                 //if (answer) {
+
                 //    try {
+
 //
+
                 //        const response = await fetch("/reboot", {
+
                 //            method: "POST",
+
                 //            headers: {
+
                 //                "Content-Type": "application/json"
+
                 //            }
+
                 //        });
+
 //
+
                 //        const result = await response.json();
+
 //
+
                 //    if (response.ok) {
+
                 //        alert(result.message);
+
                 //    } else {
+
                 //        alert(result.message || "Reboot failed.");
+
                 //    }
+
 //
+
                 //    } catch (error) {
+
                 //    
+
                 //        console.error("Reboot error:", error);
+
                 //        alert("Unable to reboot Raspberry Pi.");
+
                 //    
+
                 //    }
+
                 //} else {
+
                 //    console.log("Cancel pressed");
+
                 //}
+
             }else {
+
                 // alert(result.status);
+
+
 
                 const answer = confirm(result.status);
 
+
+
                 if (answer) {
+
                     try {
 
+
+
                         const response = await fetch("/reboot", {
+
                             method: "POST",
+
                             headers: {
+
                                 "Content-Type": "application/json"
+
                             }
+
                         });
+
+
 
                         const result = await response.json();
 
+
+
                     if (response.ok) {
+
                         alert(result.message);
+
                     } else {
+
                         alert(result.message || "Reboot failed.");
+
                     }
+
+
 
                     } catch (error) {
+
                     
+
                         console.error("Reboot error:", error);
+
                         alert("Unable to reboot Raspberry Pi.");
+
                     
+
                     }
+
                 } else {
+
                     console.log("Cancel pressed");
+
                 }
+
             }
+
         
+
         } catch(err) {
+
             alert("Failed to save configuration");
+
             console.error(err);
+
         }
+
     }
+
+
 
     async function savedvrConfig(){
+
         dvrip= document.getElementById("dvrip").value,
+
         dvrrtspport= document.getElementById("dvrrtspport").value,
+
         dvrusername= document.getElementById("dvrusername").value,
+
         dvrpassword= document.getElementById("dvrpassword").value,
 
+
+
         fetch('/update_dvrsettings',{
+
             method:'POST',
+
             headers:{
+
                 'Content-Type':'application/json'
+
             },
+
             body:JSON.stringify({
+
                 dvrip:dvrip,
+
                 dvrrtspport:dvrrtspport,
+
                 dvrusername:dvrusername,
+
                 dvrpassword:dvrpassword
+
             })
+
         })
+
         .then(response => response.json())
+
         .then(data =>{
+
             alert(data.message)
+
         })
+
         .catch(err=>{
+
             console.log(err)
+
             alert('Failed to update configuration.')
+
         })
+
     }
+
+
 
     async function savedeviceNetworkConfig(){
+
         license= document.getElementById("license").value,
+
         listenerPort= document.getElementById("listenerPort").value
+
         webaccessport= document.getElementById("webaccessport").value   
+
         currentIp= document.getElementById("ip").value   
+
     
+
         fetch('/update_env',{
+
             method:'POST',
+
             headers:{
+
                 'Content-Type':'application/json'
+
             },
+
             body:JSON.stringify({
+
                 LICENSE_NUMBER:license,
+
                 LISTENER_PORT:listenerPort,
+
                 DASHBOARD_PORT:webaccessport,
+
                 FLASK_HOST:currentIp
+
             })
+
         })
+
         .then(response => response.json())
+
         .then(data =>{
+
             alert(data.message)
+
         })
+
         .catch(err=>{
+
             console.log(err)
+
             alert('Failed to update configuration.')
+
         })
+
     }
+
+
 
     async function loadDeviceNetworkConfig() {
+
     fetch('/get_env')
+
         .then(response => response.json())
+
         .then(data => {
+
             if (data.success) {
+
                 console.log(data)
-                document.getElementById("license").value = data.LICENSE_NUMBER;
+
+                //document.getElementById("license").value = data.LICENSE_NUMBER;
+
                 document.getElementById("listenerPort").value = data.LISTENER_PORT;
-                document.getElementById("webaccessport").value = data.DASHBOARD_PORT;
+
+                document.getElementById("webaccessport").value = data.FLASK_PORT;
+
                 document.getElementById("ip").value = data.FLASK_HOST;
 
+
+
                 document.getElementById("dvrip").value = data.DVRIP;
+
                 document.getElementById("dvrrtspport").value = data.DVRRTSPPORTNO;
+
                 document.getElementById("dvrusername").value = data.DVRUSERNAME;
+
                 document.getElementById("dvrpassword").value = data.DVRPASSWORD;
+
             } else {
+
                 alert(data.message);
+
             }
+
         })
+
         .catch(err => {
+
             console.log(err);
-            alert('Failed to load configuration.');
+
+            
+
         });
+
     }
+
+
 
     loadDeviceNetworkConfig();
 
 
+
+
+
     async function openVideoEdge(){
+
     try{
+
         const response=await fetch('/api/videoedgeconfig');
+
         const config=await response.json()
 
+
+
         window.open(
+
             `http://${config.ip}:${config.port}`,
+
             '_blank'
+
         )
 
+
+
     }catch(err){
+
         alert('Unable to Open the Page at this Time.')
+
         console.log(err)
+
     }
+
 }
 
 
@@ -756,8 +1494,33 @@ async function loadstoageconsumed()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
 </script>
 
+
+
 </body>
+
 </html>
+
