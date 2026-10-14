@@ -5,7 +5,7 @@ set -Eeuo pipefail
 umask 077
 
 PROJECT_DIR="$HOME/Securico-VideoEdgeBox"
-VENV_DIR="$PROJECT_DIR/myenv"
+VENV_DIR="$PROJECT_DIR/venv"
 REPO_URL="https://github.com/Ashu300591/Securico-VideoEdgeBox-update.git"
 BRANCH="main"
 
