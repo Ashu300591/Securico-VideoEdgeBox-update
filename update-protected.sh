@@ -1,8 +1,11 @@
 
-sudo tee /usr/local/bin/update-protected >/dev/null <<'SCRIPT'
 #!/bin/bash
 set -Eeuo pipefail
 umask 077
+
+# ==========================================
+# Securico VideoEdgeBox Protected Updater
+# ==========================================
 
 PROJECT_DIR="$HOME/Securico-VideoEdgeBox"
 VENV_DIR="$PROJECT_DIR/venv"
@@ -11,9 +14,6 @@ BRANCH="main"
 
 WORK_DIR=""
 DEPLOYING=0
-HAD_APP=0
-HAD_LISTENER=0
-HAD_RUNTIME=0
 RUNTIME_NAME=""
 
 fail() {
@@ -24,35 +24,40 @@ fail() {
 
 rollback() {
     local status=$?
-    if [[ $status -ne 0 && $DEPLOYING -eq 1 ]]; then
+
+    if [[ "$status" -ne 0 && "$DEPLOYING" -eq 1 ]]; then
         echo
         echo "Update failed. Restoring previous files..."
 
-        if [[ $HAD_APP -eq 1 && -f "$WORK_DIR/backup/app.py" ]]; then
-            cp -a "$WORK_DIR/backup/app.py" "$PROJECT_DIR/app.py" || true
-        else
-            rm -f "$PROJECT_DIR/app.py"
-        fi
-
-        if [[ $HAD_LISTENER -eq 1 && -f "$WORK_DIR/backup/listener.py" ]]; then
-            cp -a "$WORK_DIR/backup/listener.py" "$PROJECT_DIR/listener.py" || true
-        else
-            rm -f "$PROJECT_DIR/listener.py"
-        fi
-
-        if [[ -n "$RUNTIME_NAME" ]]; then
-            rm -rf "$PROJECT_DIR/$RUNTIME_NAME"
-            if [[ $HAD_RUNTIME -eq 1 && -d "$WORK_DIR/backup/$RUNTIME_NAME" ]]; then
-                cp -a "$WORK_DIR/backup/$RUNTIME_NAME" "$PROJECT_DIR/$RUNTIME_NAME" || true
+        for file in app.py listener.py; do
+            if [[ -f "$WORK_DIR/backup/$file" ]]; then
+                cp -a "$WORK_DIR/backup/$file" "$PROJECT_DIR/$file" || true
             fi
+        done
+
+        # Remove newly installed runtime packages.
+        for path in "$PROJECT_DIR"/pyarmor_runtime_*; do
+            if [[ -d "$path" ]]; then
+                rm -rf "$path"
+            fi
+        done
+
+        # Restore all previously backed-up runtime packages.
+        if [[ -d "$WORK_DIR/backup/runtimes" ]]; then
+            for path in "$WORK_DIR/backup/runtimes"/pyarmor_runtime_*; do
+                if [[ -d "$path" ]]; then
+                    cp -a "$path" "$PROJECT_DIR/" || true
+                fi
+            done
         fi
 
-        echo "Rollback attempted. Check the files before restarting services."
+        echo "Rollback attempted. Verify files before restarting services."
     fi
 
     if [[ -n "$WORK_DIR" ]]; then
         rm -rf "$WORK_DIR"
     fi
+
     exit "$status"
 }
 trap rollback EXIT
@@ -61,121 +66,147 @@ echo "======================================"
 echo " Securico VideoEdgeBox Protected Update"
 echo "======================================"
 
+# 1. Validate project and environment.
 [[ -d "$PROJECT_DIR" ]] ||
     fail "Project folder not found: $PROJECT_DIR"
 
 [[ -f "$VENV_DIR/bin/activate" ]] ||
-    fail "Python environment not found: $VENV_DIR"
+    fail "Virtual environment not found: $VENV_DIR"
 
 [[ -f "$PROJECT_DIR/app.py" && -f "$PROJECT_DIR/listener.py" ]] ||
-    fail "Existing app.py or listener.py is missing. Contact support."
+    fail "Existing application files are missing. Contact support."
 
 command -v git >/dev/null 2>&1 ||
-    fail "Git is not installed. Contact support."
+    fail "Git is not installed."
 
-# Always use the project's own Python environment.
+# Use the project's existing virtual environment.
 source "$VENV_DIR/bin/activate"
 
 PYTHON="$VENV_DIR/bin/python"
 PYARMOR="$VENV_DIR/bin/pyarmor"
 
-[[ -x "$PYTHON" ]] || fail "Project Python is unavailable."
-[[ -x "$PYARMOR" ]] || fail "PyArmor is unavailable in the project environment."
+[[ -x "$PYTHON" ]] ||
+    fail "Python is unavailable in venv."
 
+[[ -x "$PYARMOR" ]] ||
+    fail "PyArmor is unavailable in venv."
+
+# Keep temporary files on the same filesystem as the project.
 WORK_DIR="$(mktemp -d "$PROJECT_DIR/.update-tmp.XXXXXX")"
-mkdir -p "$WORK_DIR/backup" "$WORK_DIR/source" "$WORK_DIR/build"
+
+mkdir -p \
+    "$WORK_DIR/backup/runtimes" \
+    "$WORK_DIR/repo"
 
 echo
-echo "[1/5] Downloading approved source files..."
+echo "[1/5] Downloading source files from GitHub..."
 
 git clone --quiet --depth 1 --single-branch \
-    --branch "$BRANCH" "$REPO_URL" "$WORK_DIR/repo" ||
-    fail "Download failed. Check network access and GitHub repository."
+    --branch "$BRANCH" \
+    "$REPO_URL" "$WORK_DIR/repo" ||
+    fail "GitHub download failed. Check network connectivity."
+
+cd "$WORK_DIR/repo"
 
 for file in app.py listener.py; do
     [[ -s "$WORK_DIR/repo/$file" ]] ||
-        fail "$file is missing or empty in the repository root."
-    cp "$WORK_DIR/repo/$file" "$WORK_DIR/source/$file"
+        fail "$file is missing or empty in the GitHub repository root."
 done
 
 echo "[2/5] Protecting files with PyArmor..."
 
-"$PYARMOR" gen -O "$WORK_DIR/build" \
-    "$WORK_DIR/source/app.py" \
-    "$WORK_DIR/source/listener.py" ||
-    fail "PyArmor failed. Check its license and error messages."
+# Requested PyArmor command.
+"$PYARMOR" gen -O dist app.py listener.py ||
+    fail "PyArmor failed. Check trial license restrictions."
+
+BUILD_DIR="$WORK_DIR/repo/dist"
 
 for file in app.py listener.py; do
-    [[ -s "$WORK_DIR/build/$file" ]] ||
-        fail "PyArmor did not generate $file."
+    [[ -s "$BUILD_DIR/$file" ]] ||
+        fail "Protected output missing: $file"
 done
 
+# Discover the generated runtime package.
 RUNTIME_PATH=""
-for candidate in "$WORK_DIR"/build/pyarmor_runtime_*; do
+
+for candidate in "$BUILD_DIR"/pyarmor_runtime_*; do
     if [[ -d "$candidate" ]]; then
         [[ -z "$RUNTIME_PATH" ]] ||
-            fail "Multiple runtime packages generated. Contact support."
+            fail "Multiple PyArmor runtimes generated."
+
         RUNTIME_PATH="$candidate"
     fi
 done
 
 [[ -n "$RUNTIME_PATH" ]] ||
-    fail "PyArmor runtime package was not generated."
+    fail "PyArmor runtime was not generated."
 
 RUNTIME_NAME="$(basename "$RUNTIME_PATH")"
 
 [[ -f "$RUNTIME_PATH/__init__.py" ]] ||
     fail "PyArmor runtime is incomplete."
 
-echo "[3/5] Checking generated runtime..."
+echo "[3/5] Validating generated runtime..."
 
-RUNTIME_NAME="$RUNTIME_NAME" PYTHONPATH="$WORK_DIR/build" \
-    "$PYTHON" -c \
-    'import importlib, os; importlib.import_module(os.environ["RUNTIME_NAME"])' ||
-    fail "Generated runtime cannot be imported on this device."
+RUNTIME_NAME="$RUNTIME_NAME" \
+PYTHONPATH="$BUILD_DIR" \
+"$PYTHON" -c \
+'import importlib, os; importlib.import_module(os.environ["RUNTIME_NAME"])' ||
+    fail "Generated runtime failed its import test."
 
-echo "[4/5] Preparing safe installation..."
+echo "[4/5] Backing up current application..."
 
-# Preserve the original files before changing anything.
 cp -a "$PROJECT_DIR/app.py" "$WORK_DIR/backup/app.py"
 cp -a "$PROJECT_DIR/listener.py" "$WORK_DIR/backup/listener.py"
-HAD_APP=1
-HAD_LISTENER=1
 
-if [[ -e "$PROJECT_DIR/$RUNTIME_NAME" ]]; then
-    [[ -d "$PROJECT_DIR/$RUNTIME_NAME" ]] ||
-        fail "Existing runtime path is not a directory."
-    cp -a "$PROJECT_DIR/$RUNTIME_NAME" "$WORK_DIR/backup/$RUNTIME_NAME"
-    HAD_RUNTIME=1
-fi
+# Back up every existing PyArmor runtime.
+for path in "$PROJECT_DIR"/pyarmor_runtime_*; do
+    if [[ -d "$path" ]]; then
+        cp -a "$path" "$WORK_DIR/backup/runtimes/"
+    fi
+done
 
-# Prepare the new runtime on the same filesystem.
+# Prepare the new runtime before modifying the application.
 cp -a "$RUNTIME_PATH" "$WORK_DIR/new-runtime"
 
-# From this point, any failure triggers rollback.
+# Deployment starts here. Any subsequent failure triggers rollback.
 DEPLOYING=1
 
-rm -rf "$PROJECT_DIR/$RUNTIME_NAME"
+# Replace existing runtime packages with the matching new runtime.
+for path in "$PROJECT_DIR"/pyarmor_runtime_*; do
+    if [[ -d "$path" ]]; then
+        rm -rf "$path"
+    fi
+done
+
 mv "$WORK_DIR/new-runtime" "$PROJECT_DIR/$RUNTIME_NAME"
 
-install -m 755 "$WORK_DIR/build/app.py" "$PROJECT_DIR/app.py"
-install -m 755 "$WORK_DIR/build/listener.py" "$PROJECT_DIR/listener.py"
+# Install both protected scripts into the main folder.
+install -m 755 "$BUILD_DIR/app.py" "$PROJECT_DIR/app.py"
+install -m 755 "$BUILD_DIR/listener.py" "$PROJECT_DIR/listener.py"
 
 echo "[5/5] Verifying installed files..."
 
-[[ -s "$PROJECT_DIR/app.py" && -s "$PROJECT_DIR/listener.py" ]] ||
-    fail "Installed scripts are missing."
+[[ -s "$PROJECT_DIR/app.py" ]] ||
+    fail "Installed app.py is missing."
+
+[[ -s "$PROJECT_DIR/listener.py" ]] ||
+    fail "Installed listener.py is missing."
 
 [[ -f "$PROJECT_DIR/$RUNTIME_NAME/__init__.py" ]] ||
     fail "Installed runtime is missing."
 
-# Test the runtime from its final location.
+# Test the installed runtime from the application directory.
 (
     cd "$PROJECT_DIR"
-    "$PYTHON" -c \
-        "import $RUNTIME_NAME"
-) || fail "Installed runtime check failed."
 
+    RUNTIME_NAME="$RUNTIME_NAME" \
+    PYTHONPATH="$PROJECT_DIR" \
+    "$PYTHON" -c \
+    'import importlib, os; importlib.import_module(os.environ["RUNTIME_NAME"])'
+) || fail "Installed runtime verification failed."
+
+# All deployment checks passed.
 DEPLOYING=0
 
 echo
@@ -186,9 +217,6 @@ echo "Protected files: app.py, listener.py"
 echo "Runtime: $RUNTIME_NAME"
 echo "Location: $PROJECT_DIR"
 echo
-echo "Your existing application processes were not restarted."
-echo "Restart services only after confirming the update."
+echo "Existing application processes were not restarted."
+echo "Test the application before restarting services."
 echo "======================================"
-SCRIPT
-sudo chmod 755 /usr/local/bin/update-protected
-echo "Setup complete. Run: update-protected"
