@@ -1364,7 +1364,7 @@ if __name__=="__main__":
         lan_thread.start()
 
         # Start Flask
-        port = int(os.environ.get("APPPORT", 5000))
+        port = int(os.environ.get("LISTENER_PORT", 5000))
 
         print("======================================")
         print("Starting Flask Application")
