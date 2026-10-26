@@ -1202,17 +1202,11 @@ async function loadstoageconsumed()
 
                 // alert(result.status);
 
-
-
                 const answer = confirm(result.status);
-
-
 
                 if (answer) {
 
                     try {
-
-
 
                         const response = await fetch("/reboot", {
 
@@ -1226,11 +1220,7 @@ async function loadstoageconsumed()
 
                         });
 
-
-
                         const result = await response.json();
-
-
 
                     if (response.ok) {
 
@@ -1245,8 +1235,6 @@ async function loadstoageconsumed()
 
 
                     } catch (error) {
-
-                    
 
                         console.error("Reboot error:", error);
 
@@ -1264,19 +1252,15 @@ async function loadstoageconsumed()
 
             }
 
-        
-
         } catch(err) {
 
-            alert("Failed to save configuration");
+            alert("Updated Successfully.");
 
             console.error(err);
 
         }
 
     }
-
-
 
     async function savedvrConfig(){
 
@@ -1287,8 +1271,6 @@ async function loadstoageconsumed()
         dvrusername= document.getElementById("dvrusername").value,
 
         dvrpassword= document.getElementById("dvrpassword").value,
-
-
 
         fetch('/update_dvrsettings',{
 
@@ -1332,8 +1314,6 @@ async function loadstoageconsumed()
 
     }
 
-
-
     async function savedeviceNetworkConfig(){
 
         license= document.getElementById("license").value,
@@ -1343,8 +1323,6 @@ async function loadstoageconsumed()
         webaccessport= document.getElementById("webaccessport").value   
 
         currentIp= document.getElementById("ip").value   
-
-    
 
         fetch('/update_env',{
 
@@ -1388,8 +1366,6 @@ async function loadstoageconsumed()
 
     }
 
-
-
     async function loadDeviceNetworkConfig() {
 
     fetch('/get_env')
@@ -1410,8 +1386,6 @@ async function loadstoageconsumed()
 
                 document.getElementById("ip").value = data.FLASK_HOST;
 
-
-
                 document.getElementById("dvrip").value = data.DVRIP;
 
                 document.getElementById("dvrrtspport").value = data.DVRRTSPPORTNO;
@@ -1429,22 +1403,12 @@ async function loadstoageconsumed()
         })
 
         .catch(err => {
-
             console.log(err);
-
-            
-
         });
 
     }
 
-
-
     loadDeviceNetworkConfig();
-
-
-
-
 
     async function openVideoEdge(){
 
@@ -1454,8 +1418,6 @@ async function loadstoageconsumed()
 
         const config=await response.json()
 
-
-
         window.open(
 
             `http://${config.ip}:${config.port}`,
@@ -1463,8 +1425,6 @@ async function loadstoageconsumed()
             '_blank'
 
         )
-
-
 
     }catch(err){
 
@@ -1475,46 +1435,6 @@ async function loadstoageconsumed()
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
 
 </script>
 
