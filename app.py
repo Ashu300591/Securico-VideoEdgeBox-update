@@ -1326,7 +1326,31 @@ def monitor_lan():
           #  check_and_start_programs()
 
         time.sleep(5)
+             
+@app.route('/batreboot', methods=['POST'])
+def batreboot():
+	try:
+		subprocess.Popen(
+		["sudo", "-n", "/usr/sbin/reboot"],
+		stdout=subprocess.DEVNULL,
+		stderr=subprocess.DEVNULL,
+		start_new_session=True
+		)
 
+		# Allow Flask to send the HTTP response first.
+		threading.Timer(2, perform_reboot).start()
+
+		return jsonify({
+			"status": "success",
+			"message": "Raspberry Pi reboot scheduled."
+		}), 202
+
+	except Exception as e:
+		return jsonify({
+			"status": "error",
+			"message": str(e)
+		}), 500
+		
 if __name__=="__main__":
 
     try:
